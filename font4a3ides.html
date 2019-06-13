@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                margin: 0 auto;
+                max-width: 1280px;
+                background-color: gray;
+            }
+            input {
+                width: 4em;
+            }
+
+            #white_map, #measure_map {
+                background-color: white;
+            }
+            #black_map {
+                background-color: black;
+            }
+            #measure_map {
+                display: none;
+            }
+            #console {
+                width: 100%;
+                min-height: 3em;
+                font-size: 140%;
+            }
+        </style>
+    </head>
+    <body>
+    <h1>PNG Font generator for A3ides firmware</h1>
+
+    <div>
+        <label for="width">Character width:</label>
+        <input id="width" type="number" value="16"/>
+
+        <label for="height">Character hight:</label>
+        <input id="height" type="number" value="20"/>
+
+        <label for="size">Font size:</label>
+        <input id="size" type="number" value="10"/>
+
+        <button id="redraw">Redraw</button>
+    </div>
+
+<pre id="console">
+</pre>
+
+<canvas id="white_map" width="256" height="300">
+    Your browser does not support the HTML5 canvas tag.
+</canvas>
+<canvas id="black_map" width="256" height="300">
+    Your browser does not support the HTML5 canvas tag.
+</canvas>
+<canvas id="measure_map" width="40" height="40">
+</canvas>
+
+<script>
+    var char_width = document.getElementById("width");
+    var char_height = document.getElementById("height");
+    var char_size = document.getElementById("size");
+
+    var wc = document.getElementById("white_map");
+    var bc = document.getElementById("black_map");
+    var mc = document.getElementById("measure_map");
+
+    var log = document.getElementById("console");
+
+    var wctx = wc.getContext("2d");
+    var bctx = bc.getContext("2d");
+    var mctx = mc.getContext("2d");
+
+    var max_width = 0;
+    var max_height = 0;
+
+    function measureHight(text, width){
+        if (width == 0) {
+            return 0;
+        }
+
+        mctx.clearRect(0, 0, mc.width, mc.height);
+        mctx.fillText(text, 0, 0);
+        let data = mctx.getImageData(0, 0, width, mc.height).data;  // only the char
+
+        for (var y=mc.height-1; y>=0; y--){
+            for (var x=width-1; x>=0; x--){
+                // if red or alpha pixel from end
+                if (data[(y*width+x)*4] || data[(y*width+x)*4+3]) {
+                    return y+1;                       // found pixel on line
+                }
+            }
+        }
+        return 0;
+    }
+
+    function redraw(){
+        let cwidth = parseInt(char_width.value);
+        let cheight = parseInt(char_height.value);
+        let csize = parseInt(char_size.value);
+
+        // chanege the canvas size first
+        wc.width = cwidth * 16;
+        wc.height = cheight * 16;
+        bc.width = cwidth * 16;
+        bc.height = cheight * 16;
+
+        wctx.font = csize+"px Atlas Grotesk";
+        wctx.textBaseline = "top";
+
+        bctx.font = csize+"px Atlas Grotesk";
+        bctx.fillStyle="white";
+        bctx.textBaseline = "top";
+
+        mctx.font = csize+"px Atlas Grotesk";
+        mctx.textBaseline = "top";
+
+        for (var y=0; y<16; y++){
+            for (var x=0; x<16; x++){
+                wctx.fillText(String.fromCharCode(y*16+x), x*cwidth, y*cheight);
+                bctx.fillText(String.fromCharCode(y*16+x), x*cwidth, y*cheight);
+
+                width = Math.ceil(mctx.measureText(String.fromCharCode(y*16+x)).width);
+                height = measureHight(String.fromCharCode(y*16+x), width);
+                max_width = Math.max(max_width, width);
+                max_height = Math.max(max_height, height);
+            }
+        }
+
+        log.textContent = "Maximum font character width is: "+max_width+" px.\n"+
+                          "Maximum font character height is: "+max_height+" px.";
+    }
+
+    document.addEventListener("DOMContentLoaded", function(event){
+        redraw();
+        document.getElementById("redraw").onclick = redraw;
+    });
+
+</script>
+
+</body>
+</html>
