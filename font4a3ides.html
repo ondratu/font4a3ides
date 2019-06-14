@@ -29,51 +29,66 @@
         </style>
     </head>
     <body>
-    <h1>PNG Font generator for A3ides firmware</h1>
+        <h1>PNG Font generator for A3ides firmware</h1>
 
-    <div>
-        <label for="width">Character width:</label>
-        <input id="width" type="number" value="16"/>
+        <div>
+            <label for="width">Character width:</label>
+            <input id="width" type="number" value="16"/>
 
-        <label for="height">Character hight:</label>
-        <input id="height" type="number" value="20"/>
+            <label for="height">Character hight:</label>
+            <input id="height" type="number" value="20"/>
 
-        <label for="size">Font size:</label>
-        <input id="size" type="number" value="10"/>
+            <label for="size">Font size:</label>
+            <input id="size" type="number" value="10"/>
 
-        <button id="redraw">Redraw</button>
-    </div>
+            <button id="redraw">Redraw</button>
+        </div>
+        <div>
+            <textarea id="example_text" lines="4">
+Mmm Thermal Hotend Mysthics--[Ok][Fail]
+Mmm Thermal Hotend Mysthics__[OK][FAIL]
+Celý bílý kůň. CELÝ BÍLÝ KǓŇ
+            </textarea>
+        </div>
 
-<pre id="console">
-</pre>
+        <pre id="console">
+        </pre>
 
-<canvas id="white_map" width="256" height="300">
-    Your browser does not support the HTML5 canvas tag.
-</canvas>
-<canvas id="black_map" width="256" height="300">
-    Your browser does not support the HTML5 canvas tag.
-</canvas>
-<canvas id="measure_map" width="40" height="40">
-</canvas>
+        <div>
+            <canvas id="white_map" width="256" height="300">
+                Your browser does not support the HTML5 canvas tag.
+            </canvas>
+            <canvas id="black_map" width="256" height="300">
+                Your browser does not support the HTML5 canvas tag.
+            </canvas>
+            <canvas id="measure_map" width="40" height="40">
+            </canvas>
+        </div>
+        <div>
+            <canvas id="example_map" width="40" height="40">
+            </canvas>
+        </div>
+
 
 <script>
     var char_width = document.getElementById("width");
     var char_height = document.getElementById("height");
     var char_size = document.getElementById("size");
+    var example_text = document.getElementById("example_text")
 
     var wc = document.getElementById("white_map");
     var bc = document.getElementById("black_map");
     var mc = document.getElementById("measure_map");
+    var ec = document.getElementById("example_map");
 
     var log = document.getElementById("console");
 
     var wctx = wc.getContext("2d");
     var bctx = bc.getContext("2d");
     var mctx = mc.getContext("2d");
+    var ectx = ec.getContext("2d");
 
-    var max_width = 0;
-    var max_height = 0;
-
+    
     function measureHight(text, width){
         if (width == 0) {
             return 0;
@@ -101,9 +116,11 @@
 
         // chanege the canvas size first
         wc.width = cwidth * 16;
-        wc.height = cheight * 16;
+        //wc.height = cheight * 16;
+        wc.height = cheight * 6;
         bc.width = cwidth * 16;
-        bc.height = cheight * 16;
+        //bc.height = cheight * 16;
+        bc.height = cheight * 6;
 
         wctx.font = csize+"px Atlas Grotesk";
         wctx.textBaseline = "top";
@@ -115,17 +132,24 @@
         mctx.font = csize+"px Atlas Grotesk";
         mctx.textBaseline = "top";
 
-        for (var y=0; y<16; y++){
-            for (var x=0; x<16; x++){
-                wctx.fillText(String.fromCharCode(y*16+x), x*cwidth, y*cheight);
-                bctx.fillText(String.fromCharCode(y*16+x), x*cwidth, y*cheight);
+        let max_width = 0;
+        let max_height = 0;
 
-                width = Math.ceil(mctx.measureText(String.fromCharCode(y*16+x)).width);
-                height = measureHight(String.fromCharCode(y*16+x), width);
+        for (var y=0; y<6; y++){        // 16 celých 256
+            for (var x=0; x<16; x++){
+                wctx.fillText(String.fromCharCode(y*16+x+32), x*cwidth, y*cheight);
+                bctx.fillText(String.fromCharCode(y*16+x+32), x*cwidth, y*cheight);
+
+                let width = Math.ceil(mctx.measureText(String.fromCharCode(y*16+x+32)).width);
+                let height = measureHight(String.fromCharCode(y*16+x), width);
                 max_width = Math.max(max_width, width);
                 max_height = Math.max(max_height, height);
             }
         }
+
+        let width = Math.ceil(ectx.measureText(example_text.value).width);
+        ec.width = width+10;
+
 
         log.textContent = "Maximum font character width is: "+max_width+" px.\n"+
                           "Maximum font character height is: "+max_height+" px.";
