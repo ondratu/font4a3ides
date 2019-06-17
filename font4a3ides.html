@@ -7,6 +7,7 @@
                 margin: 0 auto;
                 max-width: 1280px;
                 background-color: gray;
+                padding: 0 1em 0 1em;
             }
             input {
                 width: 4em;
@@ -21,10 +22,37 @@
             #measure_map {
                 display: none;
             }
+            #example_map {
+                background-color: #f8651b;
+            }
             #console {
                 width: 100%;
                 min-height: 3em;
                 font-size: 140%;
+            }
+            @font-face {
+                font-family: "Atlas Grotesk Black";
+                src: url(AtlasGrotesk-Black.otf) format("opentype");
+            }
+            @font-face {
+                font-family: "Atlas Grotesk Bold";
+                src: url(AtlasGrotesk-Bold.otf) format("opentype");
+            }
+            @font-face {
+                font-family: "Atlas Grotesk Regular";
+                src: url(AtlasGrotesk-Regular.otf) format("opentype");
+            }
+            @font-face {
+                font-family: "Atlas Grotesk Medium";
+                src: url(AtlasGrotesk-Medium.otf) format("opentype");
+            }
+            @font-face {
+                font-family: "Atlas Grotesk Light";
+                src: url(AtlasGrotesk-Light.otf) format("opentype");
+            }
+            @font-face {
+                font-family: "Atlas Grotesk Thin";
+                src: url(AtlasGrotesk-Thin.otf) format("opentype");
             }
         </style>
     </head>
@@ -33,21 +61,34 @@
 
         <div>
             <label for="width">Character width:</label>
-            <input id="width" type="number" value="16"/>
+            <input id="width" type="number" value="16" onchange="redraw()"/>
 
-            <label for="height">Character hight:</label>
-            <input id="height" type="number" value="20"/>
-
-            <label for="size">Font size:</label>
-            <input id="size" type="number" value="10"/>
-
-            <button id="redraw">Redraw</button>
+            <label for="height">Character height:</label>
+            <input id="height" type="number" value="20" onchange="redraw()"/>
         </div>
+
         <div>
-            <textarea id="example_text" lines="4">
+            <label for="size">Font size:</label>
+            <input id="size" type="number" value="20" onchange="redraw()"/>
+
+            <label for="font">Font:</label>
+            <select id="font" onchange="redraw()">
+                <option style="font-family: Monospace">Monospace</option>
+                <option style="font-family: Atlas Grotesk Thin">Atlas Grotesk Thin</option>
+                <option style="font-family: Atlas Grotesk Light">Atlas Grotesk Light</option>
+                <option style="font-family: Atlas Grotesk Regular">Atlas Grotesk Regular</option>
+                <option style="font-family: Atlas Grotesk Medium">Atlas Grotesk Medium</option>
+                <option style="font-family: Atlas Grotesk Bold">Atlas Grotesk Bold</option>
+                <option style="font-family: Atlas Grotesk Black">Atlas Grotesk Black</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="example_text">Example text:</label><br>
+            <textarea id="example_text" rows="4" cols="40" oninput="redraw()">
 Mmm Thermal Hotend Mysthics--[Ok][Fail]
 Mmm Thermal Hotend Mysthics__[OK][FAIL]
-Celý bílý kůň. CELÝ BÍLÝ KǓŇ
+Celý bílý kůň. CELÝ BÍLÝ KŮŇ
             </textarea>
         </div>
 
@@ -55,17 +96,22 @@ Celý bílý kůň. CELÝ BÍLÝ KǓŇ
         </pre>
 
         <div>
-            <canvas id="white_map" width="256" height="300">
-                Your browser does not support the HTML5 canvas tag.
-            </canvas>
-            <canvas id="black_map" width="256" height="300">
-                Your browser does not support the HTML5 canvas tag.
-            </canvas>
+            <a href="#" onclick="download_white(this)">
+                <canvas id="white_map" width="256" height="300">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </a>
+            <a href="#" onclick="download_black(this)">
+                <canvas id="black_map" width="256" height="300">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </a>
             <canvas id="measure_map" width="40" height="40">
             </canvas>
         </div>
         <div>
-            <canvas id="example_map" width="40" height="40">
+            <canvas id="example_map" width="1" height="1">
+                Your browser does not support the HTML5 canvas tag.
             </canvas>
         </div>
 
@@ -74,6 +120,7 @@ Celý bílý kůň. CELÝ BÍLÝ KǓŇ
     var char_width = document.getElementById("width");
     var char_height = document.getElementById("height");
     var char_size = document.getElementById("size");
+    var char_font = document.getElementById("font");
     var example_text = document.getElementById("example_text")
 
     var wc = document.getElementById("white_map");
@@ -88,7 +135,6 @@ Celý bílý kůň. CELÝ BÍLÝ KǓŇ
     var mctx = mc.getContext("2d");
     var ectx = ec.getContext("2d");
 
-    
     function measureHight(text, width){
         if (width == 0) {
             return 0;
@@ -113,6 +159,7 @@ Celý bílý kůň. CELÝ BÍLÝ KǓŇ
         let cwidth = parseInt(char_width.value);
         let cheight = parseInt(char_height.value);
         let csize = parseInt(char_size.value);
+        let font = csize+"px "+char_font.value;
 
         // chanege the canvas size first
         wc.width = cwidth * 16;
@@ -121,22 +168,27 @@ Celý bílý kůň. CELÝ BÍLÝ KǓŇ
         bc.width = cwidth * 16;
         //bc.height = cheight * 16;
         bc.height = cheight * 6;
+        ec.width = 40*cwidth;
+        ec.height = 4*cheight;
 
-        wctx.font = csize+"px Atlas Grotesk";
+        wctx.font = font;
         wctx.textBaseline = "top";
 
-        bctx.font = csize+"px Atlas Grotesk";
+        bctx.font = font;
         bctx.fillStyle="white";
         bctx.textBaseline = "top";
 
-        mctx.font = csize+"px Atlas Grotesk";
+        mctx.font = font;
         mctx.textBaseline = "top";
+
+        ectx.font = font;
+        ectx.textBaseline = "top";
 
         let max_width = 0;
         let max_height = 0;
 
-        for (var y=0; y<6; y++){        // 16 celých 256
-            for (var x=0; x<16; x++){
+        for (let y=0; y<6; y++){        // 16 celých 256
+            for (let x=0; x<16; x++){
                 wctx.fillText(String.fromCharCode(y*16+x+32), x*cwidth, y*cheight);
                 bctx.fillText(String.fromCharCode(y*16+x+32), x*cwidth, y*cheight);
 
@@ -147,17 +199,48 @@ Celý bílý kůň. CELÝ BÍLÝ KǓŇ
             }
         }
 
-        let width = Math.ceil(ectx.measureText(example_text.value).width);
-        ec.width = width+10;
-
-
         log.textContent = "Maximum font character width is: "+max_width+" px.\n"+
                           "Maximum font character height is: "+max_height+" px.";
+
+        let text = example_text.value;
+        let y = 0;
+        let x = 0;
+
+        for (let i=0; i<text.length; i++){
+            if (text[i] == '\n'){
+                y++;
+                x = 0;
+            } else {
+                ectx.fillText(text[i], x*cwidth, y*cheight);
+                x++;
+            }
+        }
+    }
+
+    function download_white(elm){
+        let cwidth = parseInt(char_width.value);
+        let cheight = parseInt(char_height.value);
+        let csize = parseInt(char_size.value);
+        let font = csize+"px "+char_font.value;
+
+        console.log(elm);
+        elm.download = "white_"+cwidth+"x"+cheight+"_"+font+".png";
+        elm.href = wc.toDataURL("image/png").replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+    }
+
+    function download_black(elm){
+        let cwidth = parseInt(char_width.value);
+        let cheight = parseInt(char_height.value);
+        let csize = parseInt(char_size.value);
+        let font = csize+"px "+char_font.value;
+
+        console.log(elm);
+        elm.download = "black_"+cwidth+"x"+cheight+"_"+font+".png";
+        elm.href = bc.toDataURL("image/png").replace(/^data:image\/[^;]/, 'data:application/octet-stream');
     }
 
     document.addEventListener("DOMContentLoaded", function(event){
         redraw();
-        document.getElementById("redraw").onclick = redraw;
     });
 
 </script>
