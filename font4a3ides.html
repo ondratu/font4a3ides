@@ -13,11 +13,8 @@
                 width: 4em;
             }
 
-            #white_map, #measure_map {
+            #measure_map {
                 background-color: white;
-            }
-            #black_map {
-                background-color: black;
             }
             #measure_map {
                 display: none;
@@ -74,6 +71,8 @@
             <label for="font">Font:</label>
             <select id="font" onchange="redraw()">
                 <option style="font-family: Monospace">Monospace</option>
+                <option style="font-family: Monospace">Noto Mono</option>
+                <option style="font-family: Monospace">Liberation Mono</option>
                 <option style="font-family: Atlas Grotesk Thin">Atlas Grotesk Thin</option>
                 <option style="font-family: Atlas Grotesk Light">Atlas Grotesk Light</option>
                 <option style="font-family: Atlas Grotesk Regular">Atlas Grotesk Regular</option>
@@ -84,6 +83,9 @@
         </div>
 
         <div>
+            <label for="bold">Bold</label>
+            <input id="bold" type="checkbox" onchange="redraw()">
+
             <label for="example_text">Example text:</label><br>
             <textarea id="example_text" rows="4" cols="40" oninput="redraw()">
 Mmm Thermal Hotend Mysthics--[Ok][Fail]
@@ -121,6 +123,7 @@ Celý bílý kůň. CELÝ BÍLÝ KŮŇ
     var char_height = document.getElementById("height");
     var char_size = document.getElementById("size");
     var char_font = document.getElementById("font");
+    var char_bold = document.getElementById("bold");
     var example_text = document.getElementById("example_text")
 
     var wc = document.getElementById("white_map");
@@ -159,7 +162,8 @@ Celý bílý kůň. CELÝ BÍLÝ KŮŇ
         let cwidth = parseInt(char_width.value);
         let cheight = parseInt(char_height.value);
         let csize = parseInt(char_size.value);
-        let font = csize+"px "+char_font.value;
+        let bold = char_bold.checked ? "bold " : "";
+        let font = bold+csize+"px "+char_font.value;
 
         // chanege the canvas size first
         wc.width = cwidth * 16;
@@ -171,9 +175,14 @@ Celý bílý kůň. CELÝ BÍLÝ KŮŇ
         ec.width = 40*cwidth;
         ec.height = 4*cheight;
 
+        wctx.fillStyle="white";
+        wctx.fillRect(0, 0, wc.width, wc.height);
         wctx.font = font;
         wctx.textBaseline = "top";
+        wctx.fillStyle="black";
 
+        bctx.fillStyle="black";
+        bctx.fillRect(0, 0, wc.width, wc.height);
         bctx.font = font;
         bctx.fillStyle="white";
         bctx.textBaseline = "top";
@@ -189,11 +198,16 @@ Celý bílý kůň. CELÝ BÍLÝ KŮŇ
 
         for (let y=0; y<6; y++){        // 16 celých 256
             for (let x=0; x<16; x++){
-                wctx.fillText(String.fromCharCode(y*16+x+32), x*cwidth, y*cheight);
-                bctx.fillText(String.fromCharCode(y*16+x+32), x*cwidth, y*cheight);
+                let character = y*16+x+32;
+                if (character == 127) {
+                    character = 176;
+                }
 
-                let width = Math.ceil(mctx.measureText(String.fromCharCode(y*16+x+32)).width);
-                let height = measureHight(String.fromCharCode(y*16+x), width);
+                wctx.fillText(String.fromCharCode(character), x*cwidth, y*cheight);
+                bctx.fillText(String.fromCharCode(character), x*cwidth, y*cheight);
+
+                let width = Math.ceil(mctx.measureText(String.fromCharCode(character)).width);
+                let height = measureHight(String.fromCharCode(character), width);
                 max_width = Math.max(max_width, width);
                 max_height = Math.max(max_height, height);
             }
